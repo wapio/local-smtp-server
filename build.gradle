@@ -1,0 +1,53 @@
+plugins {
+  id 'java'
+  id 'maven'
+}
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      repository(url: mavenPublicRepository) {
+        authentication(userName: sonatypeUsername, password: sonatypePassword)
+      }
+    }
+  }
+}
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
+dependencies {
+  compile group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
+  compile (group: 'org.subethamail', name: 'subethasmtp', version: '3.1.7') {
+    exclude group: 'org.slf4j'
+  }
+  compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+  compile group: 'ch.qos.logback', name: 'logback-core', version: '1.2.3'
+  testImplementation 'junit:junit:4.12'
+}
+
+jar {
+  manifest {
+    attributes 'Main-Class': 'local.smtp.server.StmpServerStarter'
+    attributes 'Class-Path':  configurations.compile.collect { it.getName() }.join(' ')
+  }
+}
+
+task zipApp(type: Zip, dependsOn: jar) {
+
+  archiveName = "local-smtp-server.zip"
+  into ('conf') {
+    from 'conf'
+  }
+  into ('lib') {
+    from jar.archivePath
+    from configurations.runtime
+  }
+  from 'script'
+  from 'README.md'
+}
+
+artifacts {
+  archives zipApp
+}
